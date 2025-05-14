@@ -1,4 +1,11 @@
-import { serverless } from 'probot';
-import app from './app.js';
+import { createNodeMiddleware, createProbot } from "probot";
+import app from "./app.js";
 
-export const probotApp = serverless(app); 
+const middleware = createNodeMiddleware(app, { probot: createProbot() });
+
+export const probotApp = (req, res) => {
+  middleware(req, res, () => {
+    res.writeHead(404);
+    res.end();
+  });
+};
