@@ -1,0 +1,45 @@
+name: Deploy to Google Cloud Functions
+
+on:
+  push:
+    branches: [main]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  FUNCTION_NAME: probotApp
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Deploy to Google Cloud Functions
+        uses: google-github-actions/deploy-cloud-functions@v2
+        with:
+          name: ${{ env.FUNCTION_NAME }}
+          runtime: nodejs20
+          entry_point: probotApp
+          region: ${{ env.REGION }}
+          source_dir: .
+          env_vars: |
+            APP_ID=${{ secrets.APP_ID }}
+            PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}
+            WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
+            CLASSROOM_TOKEN=${{ secrets.CLASSROOM_TOKEN }}
+            PR_AGENT_BOT_USER=${{ secrets.PR_AGENT_BOT_USER }} 
