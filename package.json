@@ -1,0 +1,30 @@
+{
+  "name": "classroom-autograding-support",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Support for CBF Academy assignment autograding",
+  "author": "CBF Tech Team",
+  "license": "ISC",
+  "homepage": "https://github.com//",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "start": "probot run ./app.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "probot": "^13.0.1",
+    "tweetsodium": "^0.0.3"
+  },
+  "devDependencies": {
+    "nock": "^14.0.0-beta.5",
+    "smee-client": "^2.0.0"
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "type": "module"
+}
