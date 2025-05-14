@@ -10,11 +10,6 @@ if (process.env.PRIVATE_KEY_BASE64) {
   ).toString("utf8");
 }
 
-const transform = getTransformStream({
-  logFormat: "json",
-  logLevelInString: true,
-  sentryDsn: "https://40bf6d4b06a9e5dc6e4090fe9bd41021@o4509324107448320.ingest.de.sentry.io/4509324114002000",
-});
 const log = pino(
   {
     transport: {
@@ -27,7 +22,7 @@ const log = pino(
       },
     },
   },
-  transform
+  getTransformStream()
 );
 const middleware = createNodeMiddleware(app, { probot: createProbot({ log }) });
 
