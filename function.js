@@ -9,7 +9,9 @@ const middleware = createNodeMiddleware(app, { probot: createProbot() });
 
 export const probotApp = (req, res) => {
   middleware(req, res, () => {
-    res.writeHead(404);
-    res.end();
+    if (!res.headersSent) {
+      res.writeHead(404);
+      res.end();
+    }
   });
 };

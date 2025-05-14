@@ -27,7 +27,7 @@ async function createOrUpdateRepoVariable(octokit, params) {
 
     exists = data.variables.some(v => v.name === name);
   } catch (err) {
-    console.error(`Failed to list variables for ${owner}/${repo}:`, err);
+    app.log.error(`Failed to list variables for ${owner}/${repo}:`, err);
 
     throw err;
   }
@@ -43,7 +43,7 @@ async function createOrUpdateRepoVariable(octokit, params) {
 
     await octokit.request(params);
   } catch (err) {
-    console.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
+    app.log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
 
     throw err;
   }
@@ -53,6 +53,7 @@ export default (app) => {
   app.on('repository.created', async (context) => {
     const { owner, name } = context.payload.repository;
     const ownerLogin = owner.login;
+    app.log.info(`Received repository.created for ${ownerLogin}/${name}`);
 
     // Get the public key for the repo (needed to encrypt secrets)
     const { data: publicKey } = await context.octokit.actions.getRepoPublicKey({
