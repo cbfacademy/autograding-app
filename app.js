@@ -10,7 +10,7 @@ import sodium from 'tweetsodium';
  * Checks if the variable exists by listing all variables for the repository.
  * If the variable exists, it updates (PATCH) the value; otherwise, it creates (POST) the variable.
  *
- * @param {import('@octokit/rest').Octokit} octokit - An authenticated Octokit instance.
+ * @param {import('probot').Context} context - A Probot context object with an authenticated Octokit instance.
  * @param {Object} params - Parameters for the variable operation.
  * @param {string} params.owner - The repository owner.
  * @param {string} params.repo - The repository name.
@@ -18,16 +18,16 @@ import sodium from 'tweetsodium';
  * @param {string} params.value - The variable value.
  * @throws Will log and rethrow errors if the API requests fail.
  */
-async function createOrUpdateRepoVariable(octokit, params) {
+async function createOrUpdateRepoVariable(context, params) {
   const { owner, repo, name } = params;
   let exists = false;
 
   try {
-    const { data } = await octokit.request('GET /repos/{owner}/{repo}/actions/variables', { owner, repo });
+    const { data } = await context.octokit.request('GET /repos/{owner}/{repo}/actions/variables', { owner, repo });
 
     exists = data.variables.some(v => v.name === name);
   } catch (err) {
-    app.log.error(`Failed to list variables for ${owner}/${repo}:`, err);
+    context.log.error(`Failed to list variables for ${owner}/${repo}:`, err);
 
     throw err;
   }
@@ -41,9 +41,9 @@ async function createOrUpdateRepoVariable(octokit, params) {
       params.url = '/repos/{owner}/{repo}/actions/variables';
     }
 
-    await octokit.request(params);
+    await context.octokit.request(params);
   } catch (err) {
-    app.log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
+    context.log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
 
     throw err;
   }
@@ -79,7 +79,7 @@ export default (app) => {
     });
     context.log.info('CLASSROOM_TOKEN secret added');
     // Add or update the PR_AGENT_BOT_USER variable
-    await createOrUpdateRepoVariable(context.octokit, {
+    await createOrUpdateRepoVariable(context, {
       owner: ownerLogin,
       repo: name,
       name: 'PR_AGENT_BOT_USER',
