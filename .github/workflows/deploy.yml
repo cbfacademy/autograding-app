@@ -39,7 +39,7 @@ jobs:
           source_dir: .
           env_vars: |
             APP_ID=${{ secrets.APP_ID }}
-            PRIVATE_KEY=${{ secrets.PRIVATE_KEY }}
+            PRIVATE_KEY_BASE64=${{ secrets.PRIVATE_KEY_BASE64 }}
             WEBHOOK_SECRET=${{ secrets.WEBHOOK_SECRET }}
             CLASSROOM_TOKEN=${{ secrets.CLASSROOM_TOKEN }}
             PR_AGENT_BOT_USER=${{ secrets.PR_AGENT_BOT_USER }} 
