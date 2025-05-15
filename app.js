@@ -2,7 +2,6 @@
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
-import sodium from 'tweetsodium';
 
 /**
  * Creates or updates a repository variable using the GitHub REST API.
@@ -52,7 +51,7 @@ async function createOrUpdateRepoVariable(context, params) {
 export default (app) => {
   app.on('repository.created', async (context) => {
     context.log.error('Starting repository.created');
-    const { owner, name } = context.payload.repository;
+    /* const { owner, name } = context.payload.repository;
     const ownerLogin = owner.login;
     context.log.error(`Received repository.created for ${ownerLogin}/${name}`);
 
@@ -87,7 +86,7 @@ export default (app) => {
       value: process.env.PR_AGENT_BOT_USER,
     });
     context.log.error('PR_AGENT_BOT_USER variable added');
-    context.log.error(`Added secrets and variables to ${ownerLogin}/${name}`);
+    context.log.error(`Added secrets and variables to ${ownerLogin}/${name}`); */
   });
   app.onAny(async (context) => {
     context.log.error({ event: context.name, action: context.payload.action });
