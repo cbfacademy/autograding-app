@@ -49,6 +49,7 @@ async function createOrUpdateRepoVariable(context, params) {
 }
 
 export default (app) => {
+  app.log.info('App loaded');
   app.on('repository.created', async (context) => {
     context.log.error('Starting repository.created');
     /* const { owner, name } = context.payload.repository;

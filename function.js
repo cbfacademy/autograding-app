@@ -24,13 +24,5 @@ const log = pino(
   },
   getTransformStream()
 );
-const middleware = createNodeMiddleware(app, { probot: createProbot({ log }) });
 
-export const probotApp = (req, res) => {
-  middleware(req, res, () => {
-    if (!res.headersSent) {
-      res.writeHead(404);
-      res.end();
-    }
-  });
-};
+export const probotApp = createNodeMiddleware(app, { probot: createProbot({ log }) });
