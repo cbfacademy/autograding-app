@@ -24,5 +24,22 @@ const log = pino(
   },
   getTransformStream()
 );
+const middleware = createNodeMiddleware(app, { probot: createProbot({ log }) });
 
-export const probotApp = createNodeMiddleware(app, { probot: createProbot({ log }) });
+export const probotApp = (req, res) => {
+  try {
+    middleware(req, res, () => {
+      if (!res.headersSent) {
+        res.writeHead(404);
+        res.end();
+      }
+    });
+  } catch (err) {
+    // Custom error handling
+    console.error('Unhandled error in Probot middleware:', err);
+    if (!res.headersSent) {
+      res.writeHead(500);
+      res.end('Internal Server Error');
+    }
+  }
+};
