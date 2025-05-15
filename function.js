@@ -27,8 +27,11 @@ const log = pino(
 const middleware = createNodeMiddleware(app, { probot: createProbot({ log }) });
 
 export const probotApp = (req, res) => {
+  console.log(`Starting probotApp for URL: ${req.url}`);
   try {
+    console.log("Calling middleware");
     middleware(req, res, () => {
+      console.log("Middleware callback called");
       if (!res.headersSent) {
         res.writeHead(404);
         res.end();
@@ -36,10 +39,10 @@ export const probotApp = (req, res) => {
     });
   } catch (err) {
     // Custom error handling
-    console.error('Unhandled error in Probot middleware:', err);
+    console.error("Unhandled error in Probot middleware:", err);
     if (!res.headersSent) {
       res.writeHead(500);
-      res.end('Internal Server Error');
+      res.end("Internal Server Error");
     }
   }
 };
