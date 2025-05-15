@@ -51,16 +51,17 @@ async function createOrUpdateRepoVariable(context, params) {
 
 export default (app) => {
   app.on('repository.created', async (context) => {
+    context.log.error('Starting repository.created');
     const { owner, name } = context.payload.repository;
     const ownerLogin = owner.login;
-    context.log.info(`Received repository.created for ${ownerLogin}/${name}`);
+    context.log.error(`Received repository.created for ${ownerLogin}/${name}`);
 
     // Get the public key for the repo (needed to encrypt secrets)
     const { data: publicKey } = await context.octokit.actions.getRepoPublicKey({
       owner: ownerLogin,
       repo: name,
     });
-    context.log.info('Public key retrieved');
+    context.log.error('Public key retrieved');
     // Encrypt the secret value
     const secretValue = process.env.CLASSROOM_TOKEN;
     const key = publicKey.key;
@@ -77,7 +78,7 @@ export default (app) => {
       encrypted_value: encryptedValue,
       key_id: publicKey.key_id,
     });
-    context.log.info('CLASSROOM_TOKEN secret added');
+    context.log.error('CLASSROOM_TOKEN secret added');
     // Add or update the PR_AGENT_BOT_USER variable
     await createOrUpdateRepoVariable(context, {
       owner: ownerLogin,
@@ -85,10 +86,10 @@ export default (app) => {
       name: 'PR_AGENT_BOT_USER',
       value: process.env.PR_AGENT_BOT_USER,
     });
-    context.log.info('PR_AGENT_BOT_USER variable added');
-    context.log.info(`Added secrets and variables to ${ownerLogin}/${name}`);
+    context.log.error('PR_AGENT_BOT_USER variable added');
+    context.log.error(`Added secrets and variables to ${ownerLogin}/${name}`);
   });
   app.onAny(async (context) => {
-    context.log.info({ event: context.name, action: context.payload.action });
+    context.log.error({ event: context.name, action: context.payload.action });
   });
 };
