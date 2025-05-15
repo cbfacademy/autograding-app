@@ -24,7 +24,7 @@ const log = pino(
   },
   getTransformStream()
 );
-const middleware = createNodeMiddleware(app, { probot: createProbot({ log }) });
+const middleware = createNodeMiddleware(app, { probot: createProbot() });
 
 export const probotApp = (req, res) => {
   console.log(`Starting probotApp for URL: ${req.url}`);
