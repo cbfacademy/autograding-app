@@ -4,11 +4,7 @@
  */
 
 export default (app) => {
-  app.on("repository.created", async (context) => {
-    context.log.info("Received repository.created event!");
-    console.log("Received repository.created event!");
-  });
   app.onAny(async (context) => {
-    context.log.error({ event: context.name, action: context.payload.action });
+    context.log.info({ event: context.name, action: context.payload.action });
   });
 };
