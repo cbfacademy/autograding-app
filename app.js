@@ -20,14 +20,15 @@ import sodium from 'tweetsodium';
  */
 async function createOrUpdateRepoVariable(context, params) {
   const { owner, repo, name } = params;
+  const { log, octokit } = context;
   let exists = false;
 
   try {
-    const { data } = await context.octokit.request('GET /repos/{owner}/{repo}/actions/variables', { owner, repo });
+    const { data } = await octokit.request('GET /repos/{owner}/{repo}/actions/variables', { owner, repo });
 
     exists = data.variables.some(v => v.name === name);
   } catch (err) {
-    context.log.error(`Failed to list variables for ${owner}/${repo}:`, err);
+    log.error(`Failed to list variables for ${owner}/${repo}:`, err);
 
     throw err;
   }
@@ -41,9 +42,9 @@ async function createOrUpdateRepoVariable(context, params) {
       params.url = '/repos/{owner}/{repo}/actions/variables';
     }
 
-    await context.octokit.request(params);
+    await octokit.request(params);
   } catch (err) {
-    context.log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
+    log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
 
     throw err;
   }
