@@ -24,7 +24,12 @@ const log = pino(
   },
   getTransformStream()
 );
-const middleware = createNodeMiddleware(app, { probot: createProbot() });
+
+// Create middleware with path set to root
+const middleware = createNodeMiddleware(app, { 
+  probot: createProbot(),
+  webhooksPath: "/"  // Set path to root to match Cloud Function URL
+});
 
 export const probotApp = (req, res) => {
   console.log(`Starting probotApp for URL: ${req.url}`);
