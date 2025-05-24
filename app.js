@@ -52,16 +52,15 @@ async function createOrUpdateRepoVariable(context, params) {
 
 export default (app) => {
   app.on('repository.created', async (context) => {
-    const { owner, name } = context.payload.repository;
+    const { log, octokit, payload } = context;
+    const { owner, name } = payload.repository;
     const ownerLogin = owner.login;
-    context.log.info(`Received repository.created for ${ownerLogin}/${name}`);
-
+    log.info(`Received repository.created for ${ownerLogin}/${name}`);
     // Get the public key for the repo (needed to encrypt secrets)
-    const { data: publicKey } = await context.octokit.actions.getRepoPublicKey({
+    const { data: publicKey } = await octokit.actions.getRepoPublicKey({
       owner: ownerLogin,
       repo: name,
     });
-    context.log.info('Public key retrieved');
     // Encrypt the secret value
     const secretValue = process.env.CLASSROOM_TOKEN;
     const key = publicKey.key;
@@ -71,14 +70,13 @@ export default (app) => {
     const encryptedValue = Buffer.from(encryptedBytes).toString('base64');
 
     // Add the CLASSROOM_TOKEN secret
-    await context.octokit.actions.createOrUpdateRepoSecret({
+    await octokit.actions.createOrUpdateRepoSecret({
       owner: ownerLogin,
       repo: name,
       secret_name: 'CLASSROOM_TOKEN',
       encrypted_value: encryptedValue,
       key_id: publicKey.key_id,
     });
-    context.log.info('CLASSROOM_TOKEN secret added');
     // Add or update the PR_AGENT_BOT_USER variable
     await createOrUpdateRepoVariable(context, {
       owner: ownerLogin,
@@ -86,10 +84,11 @@ export default (app) => {
       name: 'PR_AGENT_BOT_USER',
       value: process.env.PR_AGENT_BOT_USER,
     });
-    context.log.info('PR_AGENT_BOT_USER variable added');
-    context.log.info(`Added secrets and variables to ${ownerLogin}/${name}`);
+    log.info(`Added secrets and variables to ${ownerLogin}/${name}`);
   });
   app.onAny(async (context) => {
-    context.log.info({ event: context.name, action: context.payload.action });
+    const { log, name, payload } = context;
+
+    log.info({ event: name, action: payload.action });
   });
 };
