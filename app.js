@@ -113,6 +113,39 @@ async function createFeedbackBranchRuleset(context, { owner, repo }) {
   }
 }
 
+/**
+ * Reopens a feedback PR closed without merging by a non-admin collaborator,
+ * and posts a comment explaining the action.
+ *
+ * @param {import('probot').Context} context - A Probot context object.
+ * @throws Will log and rethrow errors if any API request fails.
+ */
+async function reopenFeedbackPR(context) {
+  const { log, octokit, payload } = context;
+  const { pull_request: pr, repository, sender } = payload;
+  const owner = repository.owner.login;
+  const repo = repository.name;
+  const pull_number = pr.number;
+
+  const { data: { permission } } = await octokit.request(
+    'GET /repos/{owner}/{repo}/collaborators/{username}/permission',
+    { owner, repo, username: sender.login }
+  );
+
+  if (permission === 'admin' || permission === 'maintain') return;
+
+  await octokit.request('PATCH /repos/{owner}/{repo}/pulls/{pull_number}', {
+    owner, repo, pull_number, state: 'open',
+  });
+
+  await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/comments', {
+    owner, repo, issue_number: pull_number,
+    body: 'This pull request has been automatically reopened. The feedback PR shouldn\'t be closed or merged, contact your instructor with any further questions.',
+  });
+
+  log.info(`Reopened feedback PR #${pull_number} in ${owner}/${repo} (closed by ${sender.login})`);
+}
+
 export default (app) => {
   app.on('repository.created', async (context) => {
     const { log, octokit, payload } = context;
@@ -149,6 +182,13 @@ export default (app) => {
     });
     await createFeedbackBranchRuleset(context, { owner: ownerLogin, repo: name });
     log.info(`Added secrets, variables, and branch ruleset to ${ownerLogin}/${name}`);
+  });
+  app.on('pull_request.closed', async (context) => {
+    const { payload } = context;
+
+    if (payload.pull_request.merged || payload.pull_request.base.ref !== 'feedback') return;
+
+    await reopenFeedbackPR(context);
   });
   app.onAny(async (context) => {
     const { log, name, payload } = context;
