@@ -76,6 +76,18 @@ describe("My Probot app", () => {
       })
       .reply(201);
 
+    // Mock the create feedback branch ruleset endpoint
+    nock("https://api.github.com")
+      .post("/repos/test-owner/test-repo/rulesets", body => {
+        assert.strictEqual(body.name, "Protect feedback branch");
+        assert.strictEqual(body.enforcement, "active");
+        assert.deepStrictEqual(body.conditions.ref_name.include, ["refs/heads/feedback"]);
+        assert.strictEqual(body.rules[0].type, "pull_request");
+        assert.strictEqual(body.rules[0].parameters.required_approving_review_count, 1);
+        return true;
+      })
+      .reply(201);
+
     // Simulate the repository.created event
     await probot.receive({
       name: "repository",
