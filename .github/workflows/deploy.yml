@@ -33,7 +33,7 @@ jobs:
         uses: google-github-actions/deploy-cloud-functions@v4.0.0
         with:
           name: ${{ env.FUNCTION_NAME }}
-          runtime: nodejs20
+          runtime: nodejs24
           entry_point: probotApp
           region: ${{ env.REGION }}
           source_dir: .
