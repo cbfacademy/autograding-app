@@ -69,6 +69,18 @@ async function createFeedbackBranchRuleset(context, { owner, repo }) {
       name: 'Protect feedback branch',
       target: 'branch',
       enforcement: 'active',
+      bypass_actors: [
+        {
+          actor_id: 1,
+          actor_type: 'OrganizationAdmin',
+          bypass_mode: 'always',
+        },
+        {
+          actor_id: 5,
+          actor_type: 'RepositoryRole',
+          bypass_mode: 'always',
+        },
+      ],
       conditions: {
         ref_name: {
           include: ['refs/heads/feedback'],
@@ -76,6 +88,12 @@ async function createFeedbackBranchRuleset(context, { owner, repo }) {
         },
       },
       rules: [
+        {
+          type: 'deletion',
+        },
+        {
+          type: 'non_fast_forward',
+        },
         {
           type: 'pull_request',
           parameters: {
