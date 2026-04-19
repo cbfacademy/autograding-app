@@ -50,6 +50,69 @@ async function createOrUpdateRepoVariable(context, params) {
   }
 }
 
+/**
+ * Creates a branch ruleset on the repository's `feedback` branch requiring
+ * at least 1 approving review before a pull request can be merged.
+ *
+ * @param {import('probot').Context} context - A Probot context object.
+ * @param {Object} params - Parameters for the ruleset operation.
+ * @param {string} params.owner - The repository owner.
+ * @param {string} params.repo - The repository name.
+ * @throws Will log and rethrow errors if the API request fails.
+ */
+async function createFeedbackBranchRuleset(context, { owner, repo }) {
+  const { log, octokit } = context;
+  try {
+    await octokit.request('POST /repos/{owner}/{repo}/rulesets', {
+      owner,
+      repo,
+      name: 'Protect feedback branch',
+      target: 'branch',
+      enforcement: 'active',
+      bypass_actors: [
+        {
+          actor_id: 1,
+          actor_type: 'OrganizationAdmin',
+          bypass_mode: 'always',
+        },
+        {
+          actor_id: 5,
+          actor_type: 'RepositoryRole',
+          bypass_mode: 'always',
+        },
+      ],
+      conditions: {
+        ref_name: {
+          include: ['refs/heads/feedback'],
+          exclude: [],
+        },
+      },
+      rules: [
+        {
+          type: 'deletion',
+        },
+        {
+          type: 'non_fast_forward',
+        },
+        {
+          type: 'pull_request',
+          parameters: {
+            required_approving_review_count: 1,
+            dismiss_stale_reviews_on_push: false,
+            require_code_owner_review: false,
+            require_last_push_approval: false,
+            required_review_thread_resolution: false,
+          },
+        },
+      ],
+    });
+    log.info(`Created feedback branch ruleset for ${owner}/${repo}`);
+  } catch (err) {
+    log.error(`Failed to create feedback branch ruleset for ${owner}/${repo}:`, err);
+    throw err;
+  }
+}
+
 export default (app) => {
   app.on('repository.created', async (context) => {
     const { log, octokit, payload } = context;
@@ -84,7 +147,8 @@ export default (app) => {
       name: 'PR_AGENT_BOT_USER',
       value: process.env.PR_AGENT_BOT_USER,
     });
-    log.info(`Added secrets and variables to ${ownerLogin}/${name}`);
+    await createFeedbackBranchRuleset(context, { owner: ownerLogin, repo: name });
+    log.info(`Added secrets, variables, and branch ruleset to ${ownerLogin}/${name}`);
   });
   app.onAny(async (context) => {
     const { log, name, payload } = context;
