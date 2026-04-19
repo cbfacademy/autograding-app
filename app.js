@@ -2,7 +2,7 @@
  * This is the main entrypoint to your Probot app
  * @param {import('probot').Probot} app
  */
-import sodium from 'tweetsodium';
+import sodium from "tweetsodium";
 
 /**
  * Creates or updates a repository variable using the GitHub REST API.
@@ -24,9 +24,12 @@ async function createOrUpdateRepoVariable(context, params) {
   let exists = false;
 
   try {
-    const { data } = await octokit.request('GET /repos/{owner}/{repo}/actions/variables', { owner, repo });
+    const { data } = await octokit.request(
+      "GET /repos/{owner}/{repo}/actions/variables",
+      { owner, repo },
+    );
 
-    exists = data.variables.some(v => v.name === name);
+    exists = data.variables.some((v) => v.name === name);
   } catch (err) {
     log.error(`Failed to list variables for ${owner}/${repo}:`, err);
 
@@ -35,16 +38,19 @@ async function createOrUpdateRepoVariable(context, params) {
 
   try {
     if (exists) {
-      params.method = 'PATCH';
-      params.url = '/repos/{owner}/{repo}/actions/variables/{name}';
+      params.method = "PATCH";
+      params.url = "/repos/{owner}/{repo}/actions/variables/{name}";
     } else {
-      params.method = 'POST';
-      params.url = '/repos/{owner}/{repo}/actions/variables';
+      params.method = "POST";
+      params.url = "/repos/{owner}/{repo}/actions/variables";
     }
 
     await octokit.request(params);
   } catch (err) {
-    log.error(`Failed to create or update variable ${name} for ${owner}/${repo}:`, err);
+    log.error(
+      `Failed to create or update variable ${name} for ${owner}/${repo}:`,
+      err,
+    );
 
     throw err;
   }
@@ -63,39 +69,39 @@ async function createOrUpdateRepoVariable(context, params) {
 async function createFeedbackBranchRuleset(context, { owner, repo }) {
   const { log, octokit } = context;
   try {
-    await octokit.request('POST /repos/{owner}/{repo}/rulesets', {
+    await octokit.request("POST /repos/{owner}/{repo}/rulesets", {
       owner,
       repo,
-      name: 'Protect feedback branch',
-      target: 'branch',
-      enforcement: 'active',
+      name: "Protect feedback branch",
+      target: "branch",
+      enforcement: "active",
       bypass_actors: [
         {
           actor_id: 1,
-          actor_type: 'OrganizationAdmin',
-          bypass_mode: 'always',
+          actor_type: "OrganizationAdmin",
+          bypass_mode: "always",
         },
         {
           actor_id: 5,
-          actor_type: 'RepositoryRole',
-          bypass_mode: 'always',
+          actor_type: "RepositoryRole",
+          bypass_mode: "always",
         },
       ],
       conditions: {
         ref_name: {
-          include: ['refs/heads/feedback'],
+          include: ["refs/heads/feedback"],
           exclude: [],
         },
       },
       rules: [
         {
-          type: 'deletion',
+          type: "deletion",
         },
         {
-          type: 'non_fast_forward',
+          type: "non_fast_forward",
         },
         {
-          type: 'pull_request',
+          type: "pull_request",
           parameters: {
             required_approving_review_count: 1,
             dismiss_stale_reviews_on_push: false,
@@ -108,7 +114,10 @@ async function createFeedbackBranchRuleset(context, { owner, repo }) {
     });
     log.info(`Created feedback branch ruleset for ${owner}/${repo}`);
   } catch (err) {
-    log.error(`Failed to create feedback branch ruleset for ${owner}/${repo}:`, err);
+    log.error(
+      `Failed to create feedback branch ruleset for ${owner}/${repo}:`,
+      err,
+    );
     throw err;
   }
 }
@@ -127,27 +136,39 @@ async function reopenFeedbackPR(context) {
   const repo = repository.name;
   const pull_number = pr.number;
 
-  const { data: { permission } } = await octokit.request(
-    'GET /repos/{owner}/{repo}/collaborators/{username}/permission',
-    { owner, repo, username: sender.login }
+  const {
+    data: { permission },
+  } = await octokit.request(
+    "GET /repos/{owner}/{repo}/collaborators/{username}/permission",
+    { owner, repo, username: sender.login },
   );
 
-  if (permission === 'admin' || permission === 'maintain') return;
+  if (permission === "admin" || permission === "maintain") return;
 
-  await octokit.request('PATCH /repos/{owner}/{repo}/pulls/{pull_number}', {
-    owner, repo, pull_number, state: 'open',
+  await octokit.request("PATCH /repos/{owner}/{repo}/pulls/{pull_number}", {
+    owner,
+    repo,
+    pull_number,
+    state: "open",
   });
 
-  await octokit.request('POST /repos/{owner}/{repo}/issues/{issue_number}/comments', {
-    owner, repo, issue_number: pull_number,
-    body: 'This pull request has been automatically reopened. The feedback PR shouldn\'t be closed or merged, contact your instructor with any further questions.',
-  });
+  await octokit.request(
+    "POST /repos/{owner}/{repo}/issues/{issue_number}/comments",
+    {
+      owner,
+      repo,
+      issue_number: pull_number,
+      body: "This pull request has been automatically reopened. The feedback PR shouldn't be closed or merged, contact your instructor with any further questions.",
+    },
+  );
 
-  log.info(`Reopened feedback PR #${pull_number} in ${owner}/${repo} (closed by ${sender.login})`);
+  log.info(
+    `Reopened feedback PR #${pull_number} in ${owner}/${repo} (closed by ${sender.login})`,
+  );
 }
 
 export default (app) => {
-  app.on('repository.created', async (context) => {
+  app.on("repository.created", async (context) => {
     const { log, octokit, payload } = context;
     const { owner, name } = payload.repository;
     const ownerLogin = owner.login;
@@ -161,15 +182,15 @@ export default (app) => {
     const secretValue = process.env.CLASSROOM_TOKEN;
     const key = publicKey.key;
     const messageBytes = Buffer.from(secretValue);
-    const keyBytes = Buffer.from(key, 'base64');
+    const keyBytes = Buffer.from(key, "base64");
     const encryptedBytes = sodium.seal(messageBytes, keyBytes);
-    const encryptedValue = Buffer.from(encryptedBytes).toString('base64');
+    const encryptedValue = Buffer.from(encryptedBytes).toString("base64");
 
     // Add the CLASSROOM_TOKEN secret
     await octokit.actions.createOrUpdateRepoSecret({
       owner: ownerLogin,
       repo: name,
-      secret_name: 'CLASSROOM_TOKEN',
+      secret_name: "CLASSROOM_TOKEN",
       encrypted_value: encryptedValue,
       key_id: publicKey.key_id,
     });
@@ -177,16 +198,25 @@ export default (app) => {
     await createOrUpdateRepoVariable(context, {
       owner: ownerLogin,
       repo: name,
-      name: 'PR_AGENT_BOT_USER',
+      name: "PR_AGENT_BOT_USER",
       value: process.env.PR_AGENT_BOT_USER,
     });
-    await createFeedbackBranchRuleset(context, { owner: ownerLogin, repo: name });
-    log.info(`Added secrets, variables, and branch ruleset to ${ownerLogin}/${name}`);
+    await createFeedbackBranchRuleset(context, {
+      owner: ownerLogin,
+      repo: name,
+    });
+    log.info(
+      `Added secrets, variables, and branch ruleset to ${ownerLogin}/${name}`,
+    );
   });
-  app.on('pull_request.closed', async (context) => {
+  app.on("pull_request.closed", async (context) => {
     const { payload } = context;
 
-    if (payload.pull_request.merged || payload.pull_request.base.ref !== 'feedback') return;
+    if (
+      payload.pull_request.merged ||
+      payload.pull_request.base.ref !== "feedback"
+    )
+      return;
 
     await reopenFeedbackPR(context);
   });
