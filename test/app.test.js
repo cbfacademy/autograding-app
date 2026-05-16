@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import "dotenv/config";
 import nock from "nock";
 // Requiring our app implementation
 import fs from "fs";
@@ -16,8 +16,8 @@ import { afterEach, beforeEach, describe, test } from "node:test";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Load test-specific environment variables
-import dotenv from 'dotenv';
-dotenv.config({ path: path.join(__dirname, '.env.test') });
+import dotenv from "dotenv";
+dotenv.config({ path: path.join(__dirname, ".env.test") });
 
 const privateKey = fs.readFileSync(
   path.join(__dirname, "fixtures/mock-cert.pem"),
@@ -25,7 +25,10 @@ const privateKey = fs.readFileSync(
 );
 
 const payload = JSON.parse(
-  fs.readFileSync(path.join(__dirname, "fixtures/repositories.created.json"), "utf-8"),
+  fs.readFileSync(
+    path.join(__dirname, "fixtures/repositories.created.json"),
+    "utf-8",
+  ),
 );
 
 // Use a valid 32-byte base64-encoded public key for the test
@@ -47,22 +50,29 @@ describe("My Probot app", () => {
   });
 
   test("creates a feedback branch ruleset when a repository is created", async () => {
-
     // Mock the create feedback branch ruleset endpoint
     nock("https://api.github.com")
-      .post("/repos/test-owner/test-repo/rulesets", body => {
+      .post("/repos/test-owner/test-repo/rulesets", (body) => {
         assert.strictEqual(body.name, "Protect feedback branch");
         assert.strictEqual(body.enforcement, "active");
-        assert.strictEqual(body.bypass_actors[0].actor_type, "OrganizationAdmin");
+        assert.strictEqual(
+          body.bypass_actors[0].actor_type,
+          "OrganizationAdmin",
+        );
         assert.strictEqual(body.bypass_actors[0].bypass_mode, "always");
         assert.strictEqual(body.bypass_actors[1].actor_type, "RepositoryRole");
         assert.strictEqual(body.bypass_actors[1].actor_id, 5);
         assert.strictEqual(body.bypass_actors[1].bypass_mode, "always");
-        assert.deepStrictEqual(body.conditions.ref_name.include, ["refs/heads/feedback"]);
+        assert.deepStrictEqual(body.conditions.ref_name.include, [
+          "refs/heads/feedback",
+        ]);
         assert.strictEqual(body.rules[0].type, "deletion");
         assert.strictEqual(body.rules[1].type, "non_fast_forward");
         assert.strictEqual(body.rules[2].type, "pull_request");
-        assert.strictEqual(body.rules[2].parameters.required_approving_review_count, 1);
+        assert.strictEqual(
+          body.rules[2].parameters.required_approving_review_count,
+          1,
+        );
         return true;
       })
       .reply(201);
