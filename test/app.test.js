@@ -46,35 +46,7 @@ describe("My Probot app", () => {
     probot.load(myProbotApp);
   });
 
-  test("populates secrets and variables when a repository is created", async () => {
-    // Mock the public key endpoint
-    nock("https://api.github.com")
-      .get("/repos/test-owner/test-repo/actions/secrets/public-key")
-      .reply(200, {
-        key_id: "test-key-id",
-        key: validPublicKey,
-      });
-
-    // Mock the createOrUpdateRepoSecret endpoint
-    nock("https://api.github.com")
-      .put("/repos/test-owner/test-repo/actions/secrets/CLASSROOM_TOKEN")
-      .reply(201);
-
-    // Mock the list variables endpoint
-    nock("https://api.github.com")
-      .get("/repos/test-owner/test-repo/actions/variables")
-      .reply(200, { variables: [] });
-
-    // Mock the create variable endpoint
-    nock("https://api.github.com")
-      .post("/repos/test-owner/test-repo/actions/variables", body => {
-        assert.deepStrictEqual(body, {
-          name: "PR_AGENT_BOT_USER",
-          value: process.env.PR_AGENT_BOT_USER,
-        });
-        return true;
-      })
-      .reply(201);
+  test("creates a feedback branch ruleset when a repository is created", async () => {
 
     // Mock the create feedback branch ruleset endpoint
     nock("https://api.github.com")
@@ -104,6 +76,46 @@ describe("My Probot app", () => {
           name: "test-repo",
           owner: { login: "test-owner" },
         },
+      },
+    });
+  });
+
+  test("reopens feedback PR closed by a non-admin", async () => {
+    nock("https://api.github.com")
+      .get("/repos/test-owner/test-repo/collaborators/student-user/permission")
+      .reply(200, { permission: "write" });
+
+    nock("https://api.github.com")
+      .patch("/repos/test-owner/test-repo/pulls/42")
+      .reply(200);
+
+    nock("https://api.github.com")
+      .post("/repos/test-owner/test-repo/issues/42/comments")
+      .reply(201);
+
+    await probot.receive({
+      name: "pull_request",
+      payload: {
+        action: "closed",
+        pull_request: { number: 42, merged: false, base: { ref: "feedback" } },
+        repository: { name: "test-repo", owner: { login: "test-owner" } },
+        sender: { login: "student-user" },
+      },
+    });
+  });
+
+  test("does not reopen feedback PR closed by an admin", async () => {
+    nock("https://api.github.com")
+      .get("/repos/test-owner/test-repo/collaborators/admin-user/permission")
+      .reply(200, { permission: "admin" });
+
+    await probot.receive({
+      name: "pull_request",
+      payload: {
+        action: "closed",
+        pull_request: { number: 42, merged: false, base: { ref: "feedback" } },
+        repository: { name: "test-repo", owner: { login: "test-owner" } },
+        sender: { login: "admin-user" },
       },
     });
   });

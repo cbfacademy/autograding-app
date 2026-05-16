@@ -21,8 +21,13 @@
     "tweetsodium": "^0.0.3"
   },
   "devDependencies": {
+    "@google-cloud/functions-framework": "^4.0.0",
+    "@types/nock": "^10.0.3",
+    "@types/node": "^22.15.18",
+    "dotenv": "^16.5.0",
     "nock": "^14.0.0-beta.5",
-    "smee-client": "^2.0.0"
+    "smee-client": "^2.0.0",
+    "typescript": "^5.8.3"
   },
   "engines": {
     "node": ">= 20"
