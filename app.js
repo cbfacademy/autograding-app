@@ -173,41 +173,12 @@ export default (app) => {
     const { owner, name } = payload.repository;
     const ownerLogin = owner.login;
     log.info(`Received repository.created for ${ownerLogin}/${name}`);
-    // Get the public key for the repo (needed to encrypt secrets)
-    const { data: publicKey } = await octokit.actions.getRepoPublicKey({
-      owner: ownerLogin,
-      repo: name,
-    });
-    // Encrypt the secret value
-    const secretValue = process.env.CLASSROOM_TOKEN;
-    const key = publicKey.key;
-    const messageBytes = Buffer.from(secretValue);
-    const keyBytes = Buffer.from(key, "base64");
-    const encryptedBytes = sodium.seal(messageBytes, keyBytes);
-    const encryptedValue = Buffer.from(encryptedBytes).toString("base64");
 
-    // Add the CLASSROOM_TOKEN secret
-    await octokit.actions.createOrUpdateRepoSecret({
-      owner: ownerLogin,
-      repo: name,
-      secret_name: "CLASSROOM_TOKEN",
-      encrypted_value: encryptedValue,
-      key_id: publicKey.key_id,
-    });
-    // Add or update the PR_AGENT_BOT_USER variable
-    await createOrUpdateRepoVariable(context, {
-      owner: ownerLogin,
-      repo: name,
-      name: "PR_AGENT_BOT_USER",
-      value: process.env.PR_AGENT_BOT_USER,
-    });
     await createFeedbackBranchRuleset(context, {
       owner: ownerLogin,
       repo: name,
     });
-    log.info(
-      `Added secrets, variables, and branch ruleset to ${ownerLogin}/${name}`,
-    );
+    log.info(`Added branch ruleset to ${ownerLogin}/${name}`);
   });
   app.on("pull_request.closed", async (context) => {
     const { payload } = context;
